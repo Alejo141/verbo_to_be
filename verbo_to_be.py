@@ -2,7 +2,7 @@ import streamlit as st
 import random
 
 st.set_page_config(
-    page_title="Royal Grammar Adventure",
+    page_title="Verbo To Be Adventure",
     page_icon="👑",
     layout="wide"
 )
@@ -53,7 +53,7 @@ if not st.session_state.started:
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='title'>👑✨ Royal Grammar Adventure ✨👑</div>", unsafe_allow_html=True)
+    st.markdown("<div class='title'>👑✨ Verbo To Be Adventure ✨👑</div>", unsafe_allow_html=True)
     st.markdown("<div class='subtitle'>Choose your magical destiny 🌈</div>", unsafe_allow_html=True)
 
     name = st.text_input("✨ Enter Your Name ✨")
