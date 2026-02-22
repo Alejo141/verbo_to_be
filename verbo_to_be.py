@@ -1,282 +1,234 @@
 import streamlit as st
 import random
+import json
+import os
 
-st.set_page_config(
-    page_title="Verbo To Be Adventure",
-    page_icon="👑",
-    layout="wide"
-)
+st.set_page_config(page_title="Royal Grammar Adventure", page_icon="👑", layout="wide")
 
-TOTAL_LIVES = 3
+SAVE_FILE = "royal_save.json"
 QUESTIONS_PER_LEVEL = 6
-MAX_LEVEL = 5
+TOTAL_LIVES = 3
 
-# ---------------- INIT ----------------
-if "started" not in st.session_state:
-    st.session_state.started = False
+# ---------------- SAVE SYSTEM ----------------
+def load_game():
+    if os.path.exists(SAVE_FILE):
+        with open(SAVE_FILE, "r") as f:
+            return json.load(f)
+    return None
 
-# ================= PORTADA =================
-if not st.session_state.started:
+def save_game(data):
+    with open(SAVE_FILE, "w") as f:
+        json.dump(data, f)
 
-    st.markdown("""
-    <style>
-    @keyframes gradientMove {
-        0% {background-position: 0% 50%;}
-        50% {background-position: 100% 50%;}
-        100% {background-position: 0% 50%;}
-    }
+def reset_game():
+    if os.path.exists(SAVE_FILE):
+        os.remove(SAVE_FILE)
 
-    .stApp {
-        background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb);
-        background-size: 400% 400%;
-        animation: gradientMove 12s ease infinite;
-    }
+# ---------------- LOAD GAME ----------------
+if "game" not in st.session_state:
+    saved = load_game()
+    if saved:
+        st.session_state.game = saved
+    else:
+        st.session_state.game = {
+            "name": "",
+            "mode": "",
+            "world": 1,
+            "coins": 0,
+            "lives": TOTAL_LIVES
+        }
 
-    .title {
-        font-size:70px;
-        text-align:center;
-        color:white;
-    }
+game = st.session_state.game
 
-    .subtitle {
-        font-size:32px;
-        text-align:center;
-        color:white;
-        margin-bottom:40px;
-    }
-
-    .stButton>button {
-        font-size:28px;
-        height:90px;
-        border-radius:25px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown("<div class='title'>👑✨ Verbo To Be Adventure ✨👑</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitle'>Choose your magical destiny 🌈</div>", unsafe_allow_html=True)
-
-    name = st.text_input("✨ Enter Your Name ✨")
-
+# ---------------- MODE SELECTION ----------------
+if game["mode"] == "":
+    st.markdown("## 👑 Choose Your Character 👑")
     col1, col2 = st.columns(2)
 
     with col1:
-        princess = st.button("👸🌸 Princess Adventure ✨")
+        if st.button("👸 Princess Mode"):
+            game["mode"] = "princess"
+            save_game(game)
+            st.rerun()
 
     with col2:
-        king = st.button("🤴⚔️ King Adventure 🔥")
+        if st.button("⚔️ Knight Mode"):
+            game["mode"] = "knight"
+            save_game(game)
+            st.rerun()
 
-    if (princess or king) and name.strip() == "":
-        st.warning("✨ Please enter your name ✨")
+    st.stop()
 
-    if princess and name.strip():
-        theme = "princess"
-    elif king and name.strip():
-        theme = "king"
-    else:
-        st.stop()
-
-    st.session_state.game = {
-        "name": name,
-        "theme": theme,
-        "level": 1,
-        "coins": 0,
-        "stars": 0,
-        "lives": TOTAL_LIVES
-    }
-
-    st.session_state.started = True
-    st.rerun()
-
-# ================= GAME =================
-game = st.session_state.game
-
-# Emojis por modo
-if game["theme"] == "princess":
-    header_emoji = "👸🌸✨"
-    success_msg = "🎀✨ Amazing Princess! Correct! ✨🎀"
-    fail_msg = "💔 Oh no princess! Try again! 💔"
-    medal_title = "👑✨ Royal Princess Champion ✨👑"
+# ---------------- STYLE BY MODE ----------------
+if game["mode"] == "princess":
+    primary = "#ff4da6"
+    background = "#fff0f5"
+    progress_color = "#ff4da6"
+    icon = "👸"
 else:
-    header_emoji = "🤴⚔️🔥"
-    success_msg = "⚔️🔥 Brave King! Correct! 🔥⚔️"
-    fail_msg = "💥 Oh no warrior! Try again! 💥"
-    medal_title = "🏆🔥 Supreme King Champion 🔥🏆"
+    primary = "#3366cc"
+    background = "#e6f0ff"
+    progress_color = "#3366cc"
+    icon = "⚔️"
 
-st.markdown("""
+st.markdown(f"""
 <style>
-@keyframes gradientMove {
-    0% {background-position: 0% 50%;}
-    50% {background-position: 100% 50%;}
-    100% {background-position: 0% 50%;}
-}
-
-.stApp {
-    background: linear-gradient(-45deg, #a18cd1, #fbc2eb, #84fab0, #8fd3f4);
-    background-size: 400% 400%;
-    animation: gradientMove 15s ease infinite;
-}
-
-.title2 {
+.big-title {{
+    text-align:center;
     font-size:55px;
-    text-align:center;
-    color:#222;
-}
+    color:{primary};
+}}
 
-.panel {
-    background:white;
-    padding:25px;
-    border-radius:20px;
+.question {{
+    font-size:36px;
     text-align:center;
-    font-size:28px;
-    margin-bottom:20px;
-    color:#222;
-}
+    margin-top:30px;
+}}
 
-.question-card {
-    background:#ffffff;
-    padding:40px;
-    border-radius:25px;
-    box-shadow:0px 8px 20px rgba(0,0,0,0.2);
-    font-size:40px;
-    text-align:center;
-    color:#222;
-    margin-top:20px;
-}
-
-.stButton>button {
-    font-size:30px;
-    height:90px;
-    border-radius:30px;
+.stButton>button {{
+    font-size:26px;
+    height:80px;
     width:100%;
-}
+    border-radius:20px;
+    background-color:{primary};
+    color:white;
+}}
+
+.panel {{
+    background:{background};
+    padding:20px;
+    border-radius:20px;
+    font-size:24px;
+    text-align:center;
+    color:#444444;
+    font-weight:600;
+}}
+
+div[data-testid="stProgress"] > div > div > div > div {{
+    background-color:{progress_color};
+}}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown(f"<div class='title2'>{header_emoji} Level {game['level']} {header_emoji}</div>", unsafe_allow_html=True)
+st.markdown(f'<div class="big-title">{icon} Royal Grammar Adventure {icon}</div>', unsafe_allow_html=True)
+
+# ---------------- NAME ----------------
+if game["name"] == "":
+    name = st.text_input("✨ Enter Your Name ✨")
+    if name:
+        game["name"] = name
+        save_game(game)
+        st.rerun()
+    st.stop()
 
 st.markdown(
-    f"<div class='panel'>✨ {game['name']} ✨ | 🪙 {game['coins']} | ⭐ {game['stars']} | ❤️ {game['lives']}</div>",
+    f"<div class='panel'>{icon} {game['name']} | 🌎 World {game['world']} | 🪙 {game['coins']} | ❤️ {game['lives']}</div>",
     unsafe_allow_html=True
 )
 
-# Botón regresar
-if st.button("🏠 Back to Home"):
-    st.session_state.clear()
-    st.rerun()
-
-# ---------------- BANCO PROGRESIVO ----------------
+# ---------------- PROGRESSIVE QUESTION BANK ----------------
 question_bank = {
+
+    # 🌎 WORLD 1 – Cortas
     1: [
-        "I ___ happy.",
-        "She ___ kind.",
-        "He ___ tall.",
-        "They ___ strong.",
-        "We ___ ready.",
-        "It ___ magic."
+        {"q": "I ___ happy.", "a": "am", "type": "verb"},
+        {"q": "She ___ kind.", "a": "is", "type": "verb"},
+        {"q": "They ___ ready.", "a": "are", "type": "verb"},
+        {"q": "___ am brave.", "a": "I", "type": "pronoun"},
+        {"q": "___ is strong.", "a": "He", "type": "pronoun"},
+        {"q": "___ are friends.", "a": "We", "type": "pronoun"},
     ],
+
+    # 🌎 WORLD 2 – Medias
     2: [
-        "I ___ very happy today.",
-        "She ___ very kind to everyone.",
-        "He ___ very brave in battle.",
-        "They ___ very excited now.",
-        "We ___ ready for school.",
-        "It ___ very beautiful."
+        {"q": "I ___ very happy today.", "a": "am", "type": "verb"},
+        {"q": "She ___ very kind to everyone.", "a": "is", "type": "verb"},
+        {"q": "They ___ very excited now.", "a": "are", "type": "verb"},
+        {"q": "___ are ready for battle.", "a": "They", "type": "pronoun"},
+        {"q": "___ is my best friend.", "a": "She", "type": "pronoun"},
+        {"q": "___ am learning magic.", "a": "I", "type": "pronoun"},
     ],
+
+    # 🌎 WORLD 3 – Largas
     3: [
-        "I ___ very happy because I am at the castle.",
-        "She ___ very kind when she helps her friends.",
-        "He ___ very brave when he fights the dragon.",
-        "They ___ very excited about the celebration.",
-        "We ___ ready for the magical adventure.",
-        "It ___ a beautiful day in the kingdom."
+        {"q": "I ___ very happy because I am at the castle.", "a": "am", "type": "verb"},
+        {"q": "She ___ very kind when she helps her friends.", "a": "is", "type": "verb"},
+        {"q": "They ___ working together to protect the kingdom.", "a": "are", "type": "verb"},
+        {"q": "___ are the heroes of this magical story.", "a": "They", "type": "pronoun"},
+        {"q": "___ is ready to become queen someday.", "a": "She", "type": "pronoun"},
+        {"q": "___ is a powerful magical creature.", "a": "It", "type": "pronoun"},
     ],
+
+    # 🌎 WORLD 4 – Más complejas
     4: [
-        "She ___ the smartest princess in the kingdom.",
-        "He ___ the strongest knight in the empire.",
-        "They ___ preparing for the most important battle.",
-        "We ___ the heroes of this magical story.",
-        "It ___ the biggest challenge of the year.",
-        "I ___ proud to be part of this mission."
-    ],
-    5: [
-        "I ___ very excited because today is my coronation day.",
-        "She ___ always confident when she speaks to the people.",
-        "He ___ responsible for protecting the entire kingdom.",
-        "They ___ working together to defeat the powerful dragon.",
-        "We ___ determined to win this important battle.",
-        "It ___ the most difficult adventure we have ever faced."
+        {"q": "We ___ preparing for the most important battle of the year.", "a": "are", "type": "verb"},
+        {"q": "He ___ responsible for protecting the entire kingdom.", "a": "is", "type": "verb"},
+        {"q": "I ___ proud to be part of this royal mission.", "a": "am", "type": "verb"},
+        {"q": "___ are determined to defeat the powerful dragon.", "a": "We", "type": "pronoun"},
+        {"q": "___ is the bravest knight in the empire.", "a": "He", "type": "pronoun"},
+        {"q": "___ are working together to win this battle.", "a": "They", "type": "pronoun"},
     ]
 }
 
-if "questions" not in st.session_state:
-    st.session_state.questions = random.sample(
-        question_bank[game["level"]],
-        QUESTIONS_PER_LEVEL
-    )
+options_verbs = ["am", "is", "are"]
+options_pronouns = ["I", "He", "She", "It", "We", "They"]
+
+# ---------------- RANDOMIZE ----------------
+if "level_questions" not in st.session_state or st.session_state.get("current_world") != game["world"]:
+    bank = question_bank[game["world"]]
+    st.session_state.level_questions = random.sample(bank, min(QUESTIONS_PER_LEVEL, len(bank)))
     st.session_state.index = 0
+    st.session_state.current_world = game["world"]
 
-questions = st.session_state.questions
+questions = st.session_state.level_questions
 
+progress = st.session_state.index / len(questions)
+st.progress(progress)
+
+# ---------------- GAME LOOP ----------------
 if game["lives"] <= 0:
     st.error("💀 Game Over!")
     if st.button("🔄 Restart"):
+        reset_game()
         st.session_state.clear()
         st.rerun()
     st.stop()
 
-# ---------------- GAME LOOP ----------------
 if st.session_state.index < len(questions):
 
-    question = questions[st.session_state.index]
-    st.progress(st.session_state.index / len(questions))
+    q = questions[st.session_state.index]
+    st.markdown(f"<div class='question'>{q['q']}</div>", unsafe_allow_html=True)
 
-    st.markdown(f"<div class='question-card'>{question}</div>", unsafe_allow_html=True)
+    options = options_verbs if q["type"] == "verb" else options_pronouns
+    cols = st.columns(len(options))
 
-    col1, col2, col3 = st.columns(3)
-
-    for col, option in zip([col1, col2, col3], ["am", "is", "are"]):
+    for col, option in zip(cols, options):
         with col:
             if st.button(option):
-
-                correct = (
-                    ("I ___" in question and option == "am") or
-                    ("She ___" in question and option == "is") or
-                    ("He ___" in question and option == "is") or
-                    ("It ___" in question and option == "is") or
-                    ("They ___" in question and option == "are") or
-                    ("We ___" in question and option == "are") or
-                    ("You ___" in question and option == "are")
-                )
-
-                if correct:
-                    st.success(success_msg)
-                    st.balloons()
+                if option == q["a"]:
+                    st.success("✨ Correct! +1 Coin")
                     game["coins"] += 1
-                    game["stars"] += 1
                 else:
-                    st.error(fail_msg)
+                    st.error("❌ Wrong! -1 Life")
                     game["lives"] -= 1
 
+                save_game(game)
                 st.session_state.index += 1
                 st.rerun()
 
 else:
     st.balloons()
-    st.markdown(f"## 🏆 {medal_title} 🏆")
+    st.success(f"🏆 World {game['world']} Complete!")
 
-    total_stars = game["stars"]
-
-    if total_stars >= 25:
-        medal = "🥇 GOLD MEDAL"
-    elif total_stars >= 18:
-        medal = "🥈 SILVER MEDAL"
-    else:
-        medal = "🥉 BRONZE MEDAL"
-
-    st.markdown(f"# {medal}")
-    st.markdown(f"⭐ Total Stars: {total_stars}")
-
-    if st.button("🔄 Play Again"):
-        st.session_state.clear()
+    if st.button("➡️ Next World"):
+        game["world"] += 1
+        save_game(game)
+        del st.session_state.level_questions
         st.rerun()
+
+# ---------------- RESET ----------------
+st.divider()
+if st.button("❌ Reset Progress"):
+    reset_game()
+    st.session_state.clear()
+    st.rerun()
