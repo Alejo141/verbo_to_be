@@ -220,11 +220,18 @@ else:
     st.balloons()
     st.success(f"🏆 World {game['world']} Complete!")
 
+    MAX_WORLD = 4  # último mundo disponible
+
     if st.button("➡️ Next World"):
-        game["world"] += 1
-        save_game(game)
-        del st.session_state.level_questions
-        st.rerun()
+
+        if game["world"] < MAX_WORLD:
+            game["world"] += 1
+            save_game(game)
+            del st.session_state.level_questions
+            st.rerun()
+        else:
+            st.balloons()
+            st.success("🏆 You finished all worlds! You are a Royal Grammar Master! 👑")
 
 # ---------------- RESET ----------------
 st.divider()
